@@ -5,7 +5,6 @@ from torch import nn
 import torch.nn.functional as F
 import pathlib
 import os
-import json
 
 from .modules.brep_encoder import BrepEncoder
 from .modules.utils.macro import *
@@ -138,7 +137,6 @@ class BrepSeg(pl.LightningModule):
         padding_mask_ = ~padding_mask
         num_nodes_per_graph = torch.sum(padding_mask_.long(), dim=-1)  # [batch_size]
         graph_z = graph_emb.repeat_interleave(num_nodes_per_graph, dim=0).to(graph_emb.device)
-        # z = torch.cat((node_z, graph_z), dim=-1)
         z = self.attention([node_z, graph_z])
         node_seg = self.classifier(z) # [total_nodes, num_classes]
 
@@ -170,7 +168,6 @@ class BrepSeg(pl.LightningModule):
         padding_mask_ = ~padding_mask
         num_nodes_per_graph = torch.sum(padding_mask_.long(), dim=-1)  # [batch_size]
         graph_z = graph_emb.repeat_interleave(num_nodes_per_graph, dim=0).to(graph_emb.device)
-        # z = torch.cat((node_z, graph_z), dim=1)
         z = self.attention([node_z, graph_z])
         node_seg = self.classifier(z)  # [total_nodes, num_classes]
 
@@ -212,7 +209,6 @@ class BrepSeg(pl.LightningModule):
         padding_mask_ = ~padding_mask
         num_nodes_per_graph = torch.sum(padding_mask_.long(), dim=-1)  # [batch_size]
         graph_z = graph_emb.repeat_interleave(num_nodes_per_graph, dim=0).to(graph_emb.device)
-        # z = torch.cat((node_z, graph_z), dim=1)
         z = self.attention([node_z, graph_z])
         node_seg = self.classifier(z)  # [total_nodes, num_classes]
 
@@ -247,21 +243,6 @@ class BrepSeg(pl.LightningModule):
                 feature_file.write(str(pred_feature[j] + 1))
                 feature_file.write("\n")
             feature_file.close()
-
-        # Visualization of the features ----------------------------------------------------------
-        # feture_np = z.detach().cpu().numpy()
-        # gt_label_np = labels.detach().cpu().numpy()
-        # json_root = {}
-        # json_root["node_feature"] = feture_np.tolist()
-        # json_root["gt_label"] = gt_label_np.tolist()
-        # json_root["pred_label"] = preds_np.tolist()
-        # output_path = pathlib.Path("/home/zhang/datasets_segmentation/3_latent_z/pretrain")
-        # file_name = "latent_z_%s.json" % (batch_idx)
-        #
-        # binfile_path = os.path.join(output_path, file_name)
-        # with open(binfile_path, 'w', encoding='utf-8') as fp:
-        #     json.dump(json_root, fp, indent=4)
-        # Visualization of the features ------------------------------
 
     def test_epoch_end(self, outputs):
         print("num_classes: %s" % self.num_classes)

@@ -33,22 +33,7 @@ class CADSynth(Dataset):
         self.num_class = num_class
         self.random_rotate = random_rotate
         self.file_paths = []
-
-        if split == "train":
-            self._get_filenames(path, filelist="train.txt")
-
-            self._get_filenames(pathlib.Path("/home/zhang/datasets_segmentation/mfcad_graph"), filelist="train.txt")
-            self._get_filenames(pathlib.Path("/home/zhang/datasets_segmentation/mfcadpp_graph"), filelist="train.txt")
-
-        elif split == "val":
-            self._get_filenames(path, filelist="val.txt")
-
-            self._get_filenames(pathlib.Path("/home/zhang/datasets_segmentation/mfcad_graph"), filelist="val.txt")
-            self._get_filenames(pathlib.Path("/home/zhang/datasets_segmentation/mfcadpp_graph"), filelist="val.txt")
-
-
-        elif split == "test":
-            self._get_filenames(path, filelist="test.txt")
+        self._get_filenames(path, filelist=split+".txt")
 
     def _get_filenames(self, root_dir, filelist):
         print(f"Loading data...")
@@ -173,32 +158,6 @@ class TransferDataset(Dataset):
                     if (torch.max(face_labels) > self.num_class):
                         continue
                 self.source_file_paths.append(x)
-
-        # # ============
-        # source_dir = pathlib.Path("/home/zhang/datasets_segmentation/mfcad_graph")
-        # with open(str(source_dir / f"{filelist_s}"), "r") as f:
-        #     s_file_list = [x.strip() for x in f.readlines()]
-        # for x in tqdm(source_dir.rglob(f"*[0-9].bin")):
-        #     if x.stem in s_file_list:
-        #         if (self.open_set):
-        #             bin_file = load_graphs(str(x))
-        #             face_labels = bin_file[0][0].ndata["f"].type(torch.int)  # [num_nodes]
-        #             if (torch.max(face_labels) > self.num_class):
-        #                 continue
-        #         self.source_file_paths.append(x)
-        # # ============
-        # source_dir = pathlib.Path("/home/zhang/datasets_segmentation/mfcadpp_graph")
-        # with open(str(source_dir / f"{filelist_s}"), "r") as f:
-        #     s_file_list = [x.strip() for x in f.readlines()]
-        # for x in tqdm(source_dir.rglob(f"*[0-9].bin")):
-        #     if x.stem in s_file_list:
-        #         if (self.open_set):
-        #             bin_file = load_graphs(str(x))
-        #             face_labels = bin_file[0][0].ndata["f"].type(torch.int)  # [num_nodes]
-        #             if (torch.max(face_labels) > self.num_class):
-        #                 continue
-        #         self.source_file_paths.append(x)
-
         print("Done loading {} files".format(len(self.source_file_paths)))
 
         print(f"Loading target data...")
@@ -214,7 +173,7 @@ class TransferDataset(Dataset):
                 self.target_file_paths.append(x)
         print("Done loading {} files".format(len(self.target_file_paths)))
 
-        if self.split == "test":
+        if self.split != "test":
             random.shuffle(self.source_file_paths)
             random.shuffle(self.target_file_paths)
 

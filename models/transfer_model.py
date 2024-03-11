@@ -5,7 +5,6 @@ from torch import nn
 import torch.nn.functional as F
 import pathlib
 import os
-import json
 
 from .modules.brep_encoder import BrepEncoder
 from .modules.utils.macro import *
@@ -111,40 +110,10 @@ class DomainAdapt(pl.LightningModule):
         self.save_hyperparameters()
         self.num_classes = args.num_classes
 
-        # garph encoder--------------------------------------------------------------------
-        # self.brep_encoder = BrepEncoder(
-        #     # < for graphormer
-        #     num_degree=128,  # number of in degree types in the graph
-        #     num_spatial=64,  # number of spatial types in the graph
-        #     num_edge_dis=64,  # number of edge dis types in the graph
-        #     edge_type="multi_hop",  # edge type in the graph "multi_hop"
-        #     multi_hop_max_dist=16,  # max distance of multi-hop edges
-        #     # >
-        #     num_encoder_layers=args.n_layers_encode,  # num encoder layers
-        #     embedding_dim=args.dim_node,  # encoder embedding dimension
-        #     ffn_embedding_dim=args.d_model,  # encoder embedding dimension for FFN
-        #     num_attention_heads=args.n_heads,  # num encoder attention heads
-        #     dropout=args.dropout,  # dropout probability
-        #     attention_dropout=args.attention_dropout,  # dropout probability for"attention weights"
-        #     activation_dropout=args.act_dropout,  # dropout probability after"activation in FFN"
-        #     layerdrop=0.1,
-        #     encoder_normalize_before=True,  # apply layernorm before each encoder block
-        #     pre_layernorm=True,
-        #     apply_params_init=True,  # use custom param initialization for Graphormer
-        #     activation_fn="gelu",  # activation function to use
-        # )
-
         pre_trained_model = BrepSeg.load_from_checkpoint(args.pre_train)
         self.brep_encoder = pre_trained_model.brep_encoder
-        # garph encoder--------------------------------------------------------------------
-
-        # self.attention = Attention(args.dim_node)
         self.attention = pre_trained_model.attention
-
-        # node classifier------------------------------------------------------------------
-        self.classifier = NonLinearClassifier(args.dim_node, args.num_classes, args.dropout)
-        # self.classifier = pre_trained_model.classifier
-        # node classifier------------------------------------------------------------------
+        self.classifier = pre_trained_model.classifier
 
         # domain adv------------------------------------------------------------------------
         domain_discri = DomainDiscriminator(args.dim_node, hidden_size=512)
@@ -180,15 +149,11 @@ class DomainAdapt(pl.LightningModule):
         num_nodes_per_graph_s = torch.sum(padding_mask_s_.long(), dim=-1)  # [batch_size]
         graph_z_s = graph_emb_s.repeat_interleave(num_nodes_per_graph_s, dim=0).to(graph_emb.device)
         z_s = self.attention([node_z_s, graph_z_s])
-        # z_s = node_z_s + graph_z_s
-        # z_s = torch.cat((node_z_s, graph_z_s), dim=1)
 
         padding_mask_t_ = ~padding_mask_t
         num_nodes_per_graph_t = torch.sum(padding_mask_t_.long(), dim=-1)      # [batch_size]
         graph_z_t = graph_emb_t.repeat_interleave(num_nodes_per_graph_t, dim=0).to(graph_emb.device)
         z_t = self.attention([node_z_t, graph_z_t])
-        # z_t = node_z_t + graph_z_t
-        # z_t = torch.cat((node_z_t, graph_z_t), dim=1)
 
         # node classifier--------------------------------------------------------------
         node_seg_s = self.classifier(z_s)  # [total_nodes, num_classes]
@@ -273,15 +238,11 @@ class DomainAdapt(pl.LightningModule):
         num_nodes_per_graph_s = torch.sum(padding_mask_s_.long(), dim=-1)  # [batch_size]
         graph_z_s = graph_emb_s.repeat_interleave(num_nodes_per_graph_s, dim=0).to(self.device)
         z_s = self.attention([node_z_s, graph_z_s])
-        # z_s = node_z_s + graph_z_s
-        # z_s = torch.cat((node_z_s, graph_z_s), dim=1)
 
         padding_mask_t_ = ~padding_mask_t
         num_nodes_per_graph_t = torch.sum(padding_mask_t_.long(), dim=-1)  # [batch_size]
         graph_z_t = graph_emb_t.repeat_interleave(num_nodes_per_graph_t, dim=0).to(self.device)
         z_t = self.attention([node_z_t, graph_z_t])
-        # z_t = node_z_t + graph_z_t
-        # z_t = torch.cat((node_z_t, graph_z_t), dim=1)
 
         # node classifier--------------------------------------------------------------
         node_seg_s = self.classifier(z_s)  # [total_nodes, num_classes]
@@ -378,13 +339,11 @@ class DomainAdapt(pl.LightningModule):
         padding_mask_s_ = ~padding_mask_s
         num_nodes_per_graph_s = torch.sum(padding_mask_s_.long(), dim=-1)  # [batch_size]
         graph_z_s = graph_emb_s.repeat_interleave(num_nodes_per_graph_s, dim=0).to(graph_emb.device)
-        # z_s = torch.cat((node_z_s, graph_z_s), dim=-1)  # node_feat_s [total_nodes, dim]
         z_s = self.attention([node_z_s, graph_z_s])
 
         padding_mask_t_ = ~padding_mask_t
         num_nodes_per_graph_t = torch.sum(padding_mask_t_.long(), dim=-1)  # [batch_size]
         graph_z_t = graph_emb_t.repeat_interleave(num_nodes_per_graph_t, dim=0).to(graph_emb.device)
-        # z_t = torch.cat((node_z_t, graph_z_t), dim=-1)  # node_feat_t [total_nodes, dim]
         z_t = self.attention([node_z_t, graph_z_t])
 
         # node classifier--------------------------------------------------------------
@@ -498,7 +457,7 @@ class DomainAdapt(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.brep_encoder.parameters(), lr=0.0001, betas=(0.99, 0.999))
-        optimizer.add_param_group({'params': self.classifier.parameters(), 'lr': 0.001, 'betas': (0.99, 0.999)})
+        optimizer.add_param_group({'params': self.classifier.parameters(), 'lr': 0.0001, 'betas': (0.99, 0.999)})
         optimizer.add_param_group({'params': self.domain_adv.parameters(), 'lr': 0.001, 'betas': (0.99, 0.999)})
 
         # 学习策略
