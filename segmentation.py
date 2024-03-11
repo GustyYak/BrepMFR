@@ -16,7 +16,7 @@ torch.backends.cudnn.benchmark = True
 # import os
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-parser = argparse.ArgumentParser("BrepSeg Network model")
+parser = argparse.ArgumentParser("BrepMFR Network model")
 parser.add_argument("traintest", choices=("train", "test"), help="Whether to train or test")
 parser.add_argument("--num_classes", type=int, default=25, help="Number of features")
 parser.add_argument("--dataset", choices=("cadsynth", "transfer"), default="cadsynth", help="Dataset to train on")
