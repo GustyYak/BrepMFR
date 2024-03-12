@@ -141,7 +141,7 @@ class BrepSeg(pl.LightningModule):
         node_seg = self.classifier(z) # [total_nodes, num_classes]
 
         # loss-------------------------------------------------------------------------------------------
-        labels = batch["label_feature"].long() - 1
+        labels = batch["label_feature"].long()
         labels_onehot = F.one_hot(labels, self.num_classes)
         loss = CrossEntropyLoss(labels_onehot, node_seg)
         self.log("train_loss", loss, on_step=False, on_epoch=True)
@@ -171,7 +171,7 @@ class BrepSeg(pl.LightningModule):
         z = self.attention([node_z, graph_z])
         node_seg = self.classifier(z)  # [total_nodes, num_classes]
 
-        labels = batch["label_feature"].long() - 1  # labels [total_nodes]
+        labels = batch["label_feature"].long()  # labels [total_nodes]
         labels_np = labels.long().detach().cpu().numpy()
         labels_onehot = F.one_hot(labels, self.num_classes)
         loss = CrossEntropyLoss(labels_onehot, node_seg)
@@ -213,7 +213,7 @@ class BrepSeg(pl.LightningModule):
         node_seg = self.classifier(z)  # [total_nodes, num_classes]
 
         preds = torch.argmax(node_seg, dim=-1)  # pres [total_nodes]
-        labels = batch["label_feature"].long() - 1  # labels [total_nodes]
+        labels = batch["label_feature"].long()  # labels [total_nodes]
         known_pos = torch.where(labels < self.num_classes)
         labels_ = labels[known_pos]
         preds_ = preds[known_pos]
@@ -240,7 +240,7 @@ class BrepSeg(pl.LightningModule):
             file_path = os.path.join(output_path, file_name)
             feature_file = open(file_path, mode="a")
             for j in range(end_index):
-                feature_file.write(str(pred_feature[j] + 1))
+                feature_file.write(str(pred_feature[j]))
                 feature_file.write("\n")
             feature_file.close()
 
@@ -329,7 +329,7 @@ class BrepSeg(pl.LightningModule):
         optimizer.step(closure=optimizer_closure)
 
         # manually warm up lr without a scheduler
-        if self.trainer.global_step < 10000:
-            lr_scale = min(1.0, float(self.trainer.global_step + 1) / 10000.0)
+        if self.trainer.global_step < 5000:
+            lr_scale = min(1.0, float(self.trainer.global_step + 1) / 5000.0)
             for pg in optimizer.param_groups:
                 pg["lr"] = lr_scale * 0.002

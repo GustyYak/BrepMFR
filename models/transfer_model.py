@@ -161,14 +161,14 @@ class DomainAdapt(pl.LightningModule):
 
         # source classify loss-----------------------------------------------------------------
         num_node_s = node_seg_s.size()[0]
-        label_s = batch["label_feature"][:num_node_s].long() - 1
+        label_s = batch["label_feature"][:num_node_s].long()
         label_s_onehot = F.one_hot(label_s, self.num_classes)
         loss_s = CrossEntropyLoss(label_s_onehot, node_seg_s)
         self.log("train_loss_s", loss_s, on_step=False, on_epoch=True)
 
         # target classify loss-----------------------------------------------------------------
         num_node_t = node_seg_t.size()[0]
-        label_t = batch["label_feature"][num_node_s:].long() - 1  # labels [total_nodes]
+        label_t = batch["label_feature"][num_node_s:].long()  # labels [total_nodes]
         loss_t = EntropyLoss(node_seg_t)
         self.log("train_loss_t", loss_t, on_step=False, on_epoch=True)
 
@@ -250,7 +250,7 @@ class DomainAdapt(pl.LightningModule):
 
         # source classify loss----------------------------------------------------------------
         num_node_s = node_seg_s.size()[0]
-        label_s = batch["label_feature"][:num_node_s].long() - 1
+        label_s = batch["label_feature"][:num_node_s].long()
         label_s_onehot = F.one_hot(label_s, self.num_classes)
         loss_s = CrossEntropyLoss(label_s_onehot, node_seg_s)
         self.log("eval_loss_s", loss_s, on_step=False, on_epoch=True)
@@ -266,7 +266,7 @@ class DomainAdapt(pl.LightningModule):
         for i in range(len(label_s_np)): self.label_s.append(label_s_np[i])
 
         # pre_face_acc-----------------------------------
-        label_t = batch["label_feature"][num_node_s:].long() - 1  # labels [total_nodes]
+        label_t = batch["label_feature"][num_node_s:].long()  # labels [total_nodes]
         pred_t = torch.argmax(node_seg_t, dim=-1)  # pres [total_nodes]
         known_pos = torch.where(label_t < self.num_classes)
         label_t_ = label_t[known_pos]
@@ -352,7 +352,7 @@ class DomainAdapt(pl.LightningModule):
 
         pred_t = torch.argmax(F.softmax(node_seg_t, dim=-1), dim=-1)  # pres [total_nodes]
         num_node_s = node_seg_s.size()[0]
-        label_t = batch["label_feature"][num_node_s:].long() - 1  # labels [total_nodes]
+        label_t = batch["label_feature"][num_node_s:].long()  # labels [total_nodes]
         known_pos = torch.where(label_t < self.num_classes)
         label_t_ = label_t[known_pos]
         pred_t_ = pred_t[known_pos]
@@ -377,7 +377,7 @@ class DomainAdapt(pl.LightningModule):
             file_path = os.path.join(output_path, file_name)
             feature_file = open(file_path, mode="a")
             for j in range(end_index):
-                feature_file.write(str(pred_feature[j] + 1))
+                feature_file.write(str(pred_feature[j]))
                 feature_file.write("\n")
             feature_file.close()
 
