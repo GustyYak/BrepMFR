@@ -37,7 +37,7 @@ parser.add_argument(
 parser.add_argument(
     "--experiment_name",
     type=str,
-    default="BrepToSeq-segmentation",
+    default="BrepMFR",
     help="Experiment name (used to create folder inside ./results/ to save logs and checkpoints)",
 )
 

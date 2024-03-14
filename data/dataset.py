@@ -82,6 +82,9 @@ class CADSynth(Dataset):
         basename = os.path.basename(file_path).replace(file_extension, "")
         pyg_graph.data_id = int(basename.split("_")[-1])
 
+        if(torch.max(pyg_graph.label_feature) > 24 or torch.max(pyg_graph.label_feature) < 0):
+            print(pyg_graph.data_id)
+
         return pyg_graph
 
     def __len__(self):
