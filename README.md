@@ -21,7 +21,7 @@ conda activate brep_mfr
 
 ### Data preparation
 
-Our synthetic CAD dataset will soon be publicly available on [this](https://www.scidb.cn/](https://www.scidb.cn/en/detail?dataSetId=931c088fd44f4d3e82891a5180f10d90)
+Our synthetic CAD dataset will soon be publicly available on [this](https://www.scidb.cn/en/detail?dataSetId=931c088fd44f4d3e82891a5180f10d90)
 
 ## Training
 
